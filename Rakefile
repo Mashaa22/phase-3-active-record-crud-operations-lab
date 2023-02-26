@@ -9,3 +9,28 @@ task :console do
   # Open a Pry session
   Pry.start
 end
+require 'active_record'
+require 'yaml'
+require 'sinatra/activerecord/rake'
+
+namespace :db do
+  task :load_config do
+    ActiveRecord::Base.configurations = YAML.load_file('config/database.yml')
+    ActiveRecord::Base.establish_connection(:development)
+  end
+
+  desc 'Create migration'
+  task :create_migration, [:name] do |_, args|
+    name = args[:name] || 'unnamed'
+    timestamp = Time.now.strftime('%Y%m%d%H%M%S')
+    migration_file = "db/migrate/#{timestamp}_#{name}.rb"
+    File.write(migration_file, <<-MIGRATION)
+class #{name.camelize} < ActiveRecord::Migration[6.1]
+  def change
+    # Add migration instructions here
+  end
+end
+    MIGRATION
+    puts "Created migration file: #{migration_file}"
+  end
+end
